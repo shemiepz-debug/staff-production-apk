@@ -1,4 +1,4 @@
-ആ ഫോൾഡറിലെ `.github/workflows` എന്നതിൽ ആ ഫയൽ ഉണ്ടാകും. അതല്ലെങ്കിൽ, ഈ കോഡ് കോപ്പി ചെയ്ത് അവിടെ ഉപയോഗിക്കാം:
+
 
 name: Build Staff Production APK
 
