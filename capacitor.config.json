@@ -1,0 +1,12 @@
+{
+  "appId": "com.branchops.production",
+  "appName": "Production Entry",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": true
+  },
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  }
+}

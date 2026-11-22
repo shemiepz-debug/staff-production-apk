@@ -1,0 +1,15 @@
+{
+  "name": "staff-production-app",
+  "version": "5.0.0",
+  "description": "Branch Ops Staff Production Entry Android App",
+  "scripts": {
+    "sync": "npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2",
+    "@capacitor/android": "^6.1.2"
+  }
+}
