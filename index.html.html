@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0f5c6e">
+<title>Staff Production Tracker</title>
+<style>
+  :root {
+    --bg: #eef2f4; --surface: #ffffff; --ink: #14232b; --muted: #5d707b;
+    --line: #d5dde2; --brand: #0f5c6e; --brandtxt: #ffffff;
+    --ok: #1d7a4d; --okbg: #e2f3ea; --bad: #b3261e; --badbg: #fbe3e1;
+  }
+  * { box-sizing: border-box; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-size: 15px; padding-bottom: 80px; }
+  header { background: var(--brand); color: var(--brandtxt); padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+  header h1 { margin: 0; font-size: 17px; font-weight: 600; }
+  .wrap { max-width: 540px; margin: 0 auto; padding: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+  .card h3 { margin: 0 0 10px; font-size: 15px; color: var(--brand); display: flex; justify-content: space-between; align-items: center; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; font-weight: 500; }
+  input, select { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 15px; background: #fff; color: var(--ink); margin-bottom: 10px; }
+  input:focus { outline: 2px solid var(--brand); border-color: transparent; }
+  .btn { background: var(--brand); color: #fff; border: 0; border-radius: 6px; padding: 11px 16px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; }
+  .btn.sm { padding: 6px 10px; font-size: 13px; width: auto; }
+  .btn.alt { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  .btn.danger { background: var(--badbg); color: var(--bad); border: 0; padding: 6px 10px; width: auto; }
+  .item-row { display: grid; grid-template-columns: 2fr 1fr 0.8fr auto; gap: 6px; align-items: center; margin-bottom: 8px; }
+  .item-row input, .item-row select { margin-bottom: 0; padding: 8px; font-size: 14px; }
+  .alert { padding: 10px 12px; border-radius: 6px; font-size: 13.5px; margin-bottom: 12px; }
+  .alert.ok { background: var(--okbg); color: var(--ok); }
+  .alert.bad { background: var(--badbg); color: var(--bad); }
+  .hide { display: none !important; }
+  .meta { font-size: 12.5px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Production Entry</h1>
+    <div id="hdrSub" class="meta" style="color:rgba(255,255,255,0.8)">Branch Ops Staff App</div>
+  </div>
+  <button id="btnLogout" class="btn sm alt hide" style="color:#fff;border-color:rgba(255,255,255,0.4)" onclick="logout()">Logout</button>
+</header>
+
+<div class="wrap">
+  <div id="msgBox" class="alert hide"></div>
+
+  <!-- LOGIN VIEW (Auto-connected to Railway) -->
+  <div id="viewLogin" class="card">
+    <h3>Staff Login</h3>
+    <label>Staff ID</label>
+    <input id="inStaffId" type="text" placeholder="e.g. STF01" autocomplete="username">
+    <label>Password</label>
+    <input id="inPass" type="password" placeholder="Enter your password" autocomplete="current-password">
+    <button class="btn" id="btnLogin" onclick="doLogin()">Login</button>
+  </div>
+
+  <!-- PRODUCTION ENTRY VIEW -->
+  <div id="viewApp" class="hide">
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <b id="lblStaffName" style="font-size:16px">Staff Name</b>
+        <div id="lblStaffMeta" class="meta">Branch · ID</div>
+      </div>
+      <div style="text-align:right;display:flex;gap:6px;align-items:flex-end">
+        <div>
+          <label style="margin:0;text-align:left">Section</label>
+          <select id="inSection" style="margin:0;padding:6px;font-size:13px;width:auto">
+            <option value="Sweets">Sweets</option>
+            <option value="Snacks">Snacks</option>
+            <option value="Bakery">Bakery</option>
+            <option value="Kitchen">Kitchen</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label style="margin:0;text-align:left">Date</label>
+          <input id="inDate" type="date" style="margin:0;padding:6px;font-size:13px" onchange="loadDateOrTemplate()">
+        </div>
+      </div>
+    </div>
+
+    <div id="autoFillNote" class="alert ok hide">
+      Previous day's items auto-loaded. Update quantities and tap Submit.
+    </div>
+
+    <!-- PRODUCED ITEMS -->
+    <div class="card">
+      <h3>
+        <span>1. Produced Items (ഉണ്ടാക്കിയവ)</span>
+        <button class="btn sm alt" type="button" onclick="addRow('prodList')">+ Add</button>
+      </h3>
+      <div id="prodList"></div>
+    </div>
+
+    <!-- RAW MATERIALS USED -->
+    <div class="card">
+      <h3>
+        <span>2. Raw Materials Used (ഉപയോഗിച്ചവ)</span>
+        <button class="btn sm alt" type="button" onclick="addRow('rawList')">+ Add</button>
+      </h3>
+      <div id="rawList"></div>
+    </div>
+
+    <div class="card">
+      <label>Notes (Optional)</label>
+      <input id="inNotes" type="text" placeholder="Any remarks or wastage notes...">
+      <button class="btn" id="btnSubmit" onclick="submitProduction()">Submit Today's Production</button>
+    </div>
+
+    <!-- RECENT SUBMISSIONS -->
+    <div class="card">
+      <h3>Recent Entries</h3>
+      <div id="historyList" class="meta">No entries yet.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SERVER_URL = 'https://brach-ops-production.up.railway.app';
+const ACCESS_KEY = '123123';
+const LS_SESS = 'bo_staff_app_sess';
+
+let stateData = { stf: [], prodUsers: {}, prodLogs: [] };
+let stateRev = 0;
+let currentUser = null;
+
+function showMsg(txt, type='ok') {
+  const b = document.getElementById('msgBox');
+  b.textContent = txt;
+  b.className = 'alert ' + type;
+  b.classList.remove('hide');
+  setTimeout(() => b.classList.add('hide'), 4500);
+}
+
+async function fetchServerState() {
+  const res = await fetch(SERVER_URL + '/api/state?since=0', {
+    headers: { 'X-Access-Key': ACCESS_KEY },
+    cache: 'no-store'
+  });
+  if (res.status === 401) throw new Error('Server authentication failed.');
+  if (!res.ok) throw new Error('Server connection failed (' + res.status + ')');
+  const data = await res.json();
+  stateRev = data.rev || 0;
+  stateData.stf = (data.keys.stf && data.keys.stf.v) || [];
+  stateData.prodUsers = (data.keys.prodUsers && data.keys.prodUsers.v) || {};
+  stateData.prodLogs = (data.keys.prodLogs && data.keys.prodLogs.v) || [];
+  stateData.prodUsersRev = (data.keys.prodUsers && data.keys.prodUsers.rev) || 0;
+  stateData.prodLogsRev = (data.keys.prodLogs && data.keys.prodLogs.rev) || 0;
+}
+
+async function doLogin() {
+  const sid = document.getElementById('inStaffId').value.trim().toUpperCase();
+  const pwd = document.getElementById('inPass').value.trim();
+
+  if (!sid || !pwd) return showMsg('Enter Staff ID and Password', 'bad');
+
+  const btn = document.getElementById('btnLogin');
+  btn.disabled = true; btn.textContent = 'Logging in...';
+  try {
+    await fetchServerState();
+    const uEntry = Object.values(stateData.prodUsers).find(u => u && (u.staffCode || '').toUpperCase() === sid && u.active !== false && u.password);
+    if (!uEntry || uEntry.password !== pwd) {
+      throw new Error('Invalid Staff ID or Password, or access disabled.');
+    }
+    const stfObj = stateData.stf.find(s => s.id === uEntry.stfId) || {};
+    currentUser = {
+      stfId: uEntry.stfId,
+      staffCode: uEntry.staffCode,
+      name: stfObj.name || uEntry.staffName || sid,
+      branch: stfObj.branch || uEntry.branch || 'Main Branch',
+      section: uEntry.section || 'Snacks'
+    };
+    localStorage.setItem(LS_SESS, JSON.stringify(currentUser));
+    openApp();
+  } catch (err) {
+    showMsg(err.message, 'bad');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Login';
+  }
+}
+
+function logout() {
+  localStorage.removeItem(LS_SESS);
+  currentUser = null;
+  document.getElementById('viewApp').classList.add('hide');
+  document.getElementById('btnLogout').classList.add('hide');
+  document.getElementById('viewLogin').classList.remove('hide');
+}
+
+function addRow(containerId, name='', qty='', unit='pcs') {
+  const div = document.createElement('div');
+  div.className = 'item-row';
+  div.innerHTML = `
+    <input type="text" placeholder="Item name" value="${name.replace(/"/g,'&quot;')}" class="i-name">
+    <input type="number" step="any" min="0" placeholder="Qty" value="${qty}" class="i-qty">
+    <select class="i-unit">
+      <option value="pcs" ${unit==='pcs'?'selected':''}>pcs</option>
+      <option value="kg" ${unit==='kg'?'selected':''}>kg</option>
+      <option value="g" ${unit==='g'?'selected':''}>g</option>
+      <option value="L" ${unit==='L'?'selected':''}>L</option>
+      <option value="pkt" ${unit==='pkt'?'selected':''}>pkt</option>
+      <option value="box" ${unit==='box'?'selected':''}>box</option>
+    </select>
+    <button type="button" class="btn danger" onclick="this.parentElement.remove()">×</button>
+  `;
+  document.getElementById(containerId).appendChild(div);
+}
+
+function readRows(containerId) {
+  const rows = document.querySelectorAll('#' + containerId + ' .item-row');
+  const out = [];
+  rows.forEach(r => {
+    const name = r.querySelector('.i-name').value.trim();
+    const qty = parseFloat(r.querySelector('.i-qty').value);
+    const unit = r.querySelector('.i-unit').value;
+    if (name && !isNaN(qty) && qty > 0) out.push({ name, qty, unit });
+  });
+  return out;
+}
+
+function loadDateOrTemplate() {
+  const dt = document.getElementById('inDate').value;
+  const myLogs = stateData.prodLogs
+    .filter(l => l.stfId === currentUser.stfId)
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  const prodEl = document.getElementById('prodList');
+  const rawEl = document.getElementById('rawList');
+  prodEl.innerHTML = ''; rawEl.innerHTML = '';
+  document.getElementById('autoFillNote').classList.add('hide');
+
+  const existing = myLogs.find(l => l.date === dt);
+  if (existing) {
+    (existing.produced || []).forEach(i => addRow('prodList', i.name, i.qty, i.unit));
+    (existing.rawUsed || []).forEach(i => addRow('rawList', i.name, i.qty, i.unit));
+    document.getElementById('inNotes').value = existing.notes || '';
+    showMsg('Loaded existing entry for ' + dt, 'ok');
+  } else if (myLogs.length > 0) {
+    const last = myLogs[0];
+    (last.produced || []).forEach(i => addRow('prodList', i.name, i.qty, i.unit));
+    (last.rawUsed || []).forEach(i => addRow('rawList', i.name, i.qty, i.unit));
+    document.getElementById('inNotes').value = '';
+    document.getElementById('autoFillNote').classList.remove('hide');
+  } else {
+    addRow('prodList'); addRow('rawList');
+  }
+
+  const hist = document.getElementById('historyList');
+  if (!myLogs.length) {
+    hist.innerHTML = 'No previous entries.';
+  } else {
+    hist.innerHTML = myLogs.slice(0, 7).map(l => `
+      <div style="padding:8px 0;border-bottom:1px solid var(--line)">
+        <b>${l.date}</b> · ${(l.produced||[]).length} items produced, ${(l.rawUsed||[]).length} raw materials
+        <div class="meta">${(l.produced||[]).map(x=>x.name+': '+x.qty+x.unit).join(', ')}</div>
+      </div>
+    `).join('');
+  }
+}
+
+async function submitProduction() {
+  const dt = document.getElementById('inDate').value;
+  const produced = readRows('prodList');
+  const rawUsed = readRows('rawList');
+  const notes = document.getElementById('inNotes').value.trim();
+
+  if (!dt) return showMsg('Select a date', 'bad');
+  if (!produced.length && !rawUsed.length) return showMsg('Enter at least one produced item or raw material.', 'bad');
+
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  try {
+    await fetchServerState();
+    const existingIdx = stateData.prodLogs.findIndex(l => l.stfId === currentUser.stfId && l.date === dt);
+    const record = {
+      id: existingIdx >= 0 ? stateData.prodLogs[existingIdx].id : ('pr_' + Date.now().toString(36)),
+      stfId: currentUser.stfId,
+      staffCode: currentUser.staffCode,
+      staffName: currentUser.name,
+      branch: currentUser.branch,
+      section: document.getElementById('inSection').value || currentUser.section || 'Snacks',
+      date: dt,
+      produced,
+      rawUsed,
+      notes,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (existingIdx >= 0) stateData.prodLogs[existingIdx] = record;
+    else stateData.prodLogs.push(record);
+
+    const res = await fetch(SERVER_URL + '/api/state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Access-Key': ACCESS_KEY },
+      body: JSON.stringify({
+        changes: {
+          prodLogs: { v: stateData.prodLogs, base: stateData.prodLogsRev || 0 }
+        }
+      })
+    });
+    if (!res.ok) throw new Error('Failed to save (' + res.status + ')');
+    showMsg('Production saved successfully!', 'ok');
+    loadDateOrTemplate();
+  } catch (err) {
+    showMsg(err.message, 'bad');
+  } finally {
+    btn.disabled = false; btn.textContent = "Submit Today's Production";
+  }
+}
+
+async function openApp() {
+  document.getElementById('viewLogin').classList.add('hide');
+  document.getElementById('viewApp').classList.remove('hide');
+  document.getElementById('btnLogout').classList.remove('hide');
+  document.getElementById('lblStaffName').textContent = currentUser.name;
+  document.getElementById('lblStaffMeta').textContent = currentUser.branch + ' · ID: ' + currentUser.staffCode;
+  document.getElementById('inSection').value = currentUser.section || 'Snacks';
+  document.getElementById('inDate').value = new Date().toISOString().slice(0, 10);
+  loadDateOrTemplate();
+}
+
+// Auto-resume saved staff session
+(async function init() {
+  const saved = localStorage.getItem(LS_SESS);
+  if (saved) {
+    try {
+      currentUser = JSON.parse(saved);
+      await fetchServerState();
+      openApp();
+    } catch (e) {}
+  }
+})();
+</script>
+</body>
+</html>
