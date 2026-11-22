@@ -1,19 +1,4 @@
-name: Build Staff Production APK
-
-on:
-workflow_dispatch:
-push:
-branches: [ main, master ]
-
-jobs:
-build-apk:
-runs-on: ubuntu-latest
-steps:
-- name: Checkout repository
-uses: actions/checkout@v4
-
-```
-  - name: Set up Node.js 20
+- name: Set up Node.js 20
     uses: actions/setup-node@v4
     with:
       node-version: '20'
@@ -46,5 +31,3 @@ uses: actions/checkout@v4
     with:
       name: Staff-Production-App-v5-APK
       path: Staff-Production-App-v5.apk
-
-```
